@@ -26,11 +26,6 @@ public class MyTrain {
     }
 
     private static void initialize_parameters() {
-        parameter = new Parameter();
-        parameter.setSolverType(SolverType.L2R_L2LOSS_SVC_DUAL);
-        parameter.setC(1);
-        parameter.setMaxIters(1000);
-        parameter.setEps(0.00001);
         bias = -1;
         cross_validation = false;
         nr_fold = 10;
@@ -114,40 +109,6 @@ public class MyTrain {
                 trainSet[setSequence].add(new MyUtil.Record(label, features));
             }
             Linear.info("Train Set Size: %d\n", lineNr);
-        }
-    }
-
-    private static void crossValidate() {
-        double totalError = 0;
-        double sumv = 0, sumy = 0, sumvv = 0, sumyy = 0, sumvy = 0;
-        double[] target = new double[problem.l];
-
-        long start, stop;
-        start = System.currentTimeMillis();
-        Linear.crossValidation(problem, parameter, nr_fold, target);
-        stop = System.currentTimeMillis();
-        System.out.println("time: " + (stop - start) + "ms");
-
-        if (parameter.solverType.isSupportVectorRegression()) {
-            for (int i = 0; i < problem.l; i++) {
-                double y = problem.y[i];
-                double v = target[i];
-                totalError += (v - y) * (v - y);
-                sumv += v;
-                sumy += y;
-                sumvv += v * v;
-                sumyy += y * y;
-                sumvy += v * y;
-            }
-            System.out.printf("Cross Validation Mean_squared_error = %g%n", totalError/problem.l);
-            System.out.printf("Cross Validation Squared_correlation_corfficient = %g%n", ((problem.l*sumvy-sumv*sumy)*(problem.l*sumvy-sumv*sumy))/((problem.l*sumvv-sumv*sumv)*(problem.l*sumyy-sumy*sumy)));
-        } else {
-            int totalCorrect = 0;
-            for (int i = 0; i < problem.l; i++)
-                if (target[i] == problem.y[i])
-                    ++totalCorrect;
-            System.out.printf("correct: %d%n", totalCorrect);
-            System.out.printf("Cross Validation Accuracy = %g%%%n", 100.0*totalCorrect/problem.l);
         }
     }
 
@@ -280,11 +241,15 @@ public class MyTrain {
     }
 
     static Model basicTrain() throws IOException, InvalidInputDataException {
+        parameter = new Parameter();
+        parameter.setSolverType(SolverType.L2R_L2LOSS_SVC_DUAL);
+        parameter.setC(1);
+        parameter.setMaxIters(1000);
+        parameter.setEps(0.00001);
         Linear.info("Basic Train Begin...\n");
         long start = System.currentTimeMillis();
         problem = basicProblem();
         if (cross_validation) {
-            crossValidate();
             return null;
         } else {
             Model model = Linear.train(problem, parameter);
@@ -294,7 +259,52 @@ public class MyTrain {
         }
     }
 
+    public static void basicCrossValidate() {
+        parameter = new Parameter();
+        parameter.setSolverType(SolverType.L2R_L2LOSS_SVC_DUAL);
+        parameter.setC(0.1);
+        parameter.setMaxIters(1000);
+        parameter.setEps(0.00001);
+        problem = basicProblem();
+        double totalError = 0;
+        double sumv = 0, sumy = 0, sumvv = 0, sumyy = 0, sumvy = 0;
+        double[] target = new double[problem.l];
+
+        long start, stop;
+        start = System.currentTimeMillis();
+        Linear.crossValidation(problem, parameter, nr_fold, target);
+        stop = System.currentTimeMillis();
+        System.out.println("time: " + (stop - start) + "ms");
+
+        if (parameter.solverType.isSupportVectorRegression()) {
+            for (int i = 0; i < problem.l; i++) {
+                double y = problem.y[i];
+                double v = target[i];
+                totalError += (v - y) * (v - y);
+                sumv += v;
+                sumy += y;
+                sumvv += v * v;
+                sumyy += y * y;
+                sumvy += v * y;
+            }
+            System.out.printf("Cross Validation Mean_squared_error = %g%n", totalError/problem.l);
+            System.out.printf("Cross Validation Squared_correlation_corfficient = %g%n", ((problem.l*sumvy-sumv*sumy)*(problem.l*sumvy-sumv*sumy))/((problem.l*sumvv-sumv*sumv)*(problem.l*sumyy-sumy*sumy)));
+        } else {
+            int totalCorrect = 0;
+            for (int i = 0; i < problem.l; i++)
+                if (target[i] == problem.y[i])
+                    ++totalCorrect;
+            System.out.printf("correct: %d%n", totalCorrect);
+            System.out.printf("Cross Validation Accuracy = %g%%%n", 100.0*totalCorrect/problem.l);
+        }
+    }
+
     static Model[][] randomMinMaxModuleTrain() throws IOException, InvalidInputDataException {
+        parameter = new Parameter();
+        parameter.setSolverType(SolverType.L2R_L2LOSS_SVC_DUAL);
+        parameter.setC(1);
+        parameter.setMaxIters(1000);
+        parameter.setEps(0.00001);
         Linear.info("Random Min_Max_Module Train Begin...\n");
         long start = System.currentTimeMillis();
         ArrayList<MyUtil.Record>[] arrayLists = constructArrayList();
@@ -316,7 +326,7 @@ public class MyTrain {
             res[i] = new Model[constNegSetNum];
             threads[i] = new TrainSubThread[constNegSetNum];
             for (int j = 0; j < constNegSetNum; j++) {
-                Linear.info("Train Subset i: %d size: %d \t j: %d size: %d\n", i, posInfoLength[i], j, posInfoLength[j]);
+                Linear.info("Train Subset i: %d size: %d \t j: %d size: %d\n", i, posInfoLength[i], j, negInfoLength[j]);
                 threads[i][j] = new TrainSubThread(res, i, j, pos, neg, posInfoOffset[i], negInfoOffset[j], posInfoLength[i], negInfoLength[j]);
                 threads[i][j].start();
             }
@@ -327,7 +337,42 @@ public class MyTrain {
         return res;
     }
 
+    public static void randomMinMaxModuleCrossValidate() {
+        parameter = new Parameter();
+        parameter.setSolverType(SolverType.L2R_L2LOSS_SVC_DUAL);
+        parameter.setC(0.1);
+        parameter.setMaxIters(1000);
+        parameter.setEps(0.00001);
+        problem = basicProblem();
+        double totalError = 0;
+        double sumv = 0, sumy = 0, sumvv = 0, sumyy = 0, sumvy = 0;
+        double[] target = new double[problem.l];
+
+        long start, stop;
+        start = System.currentTimeMillis();
+
+        Linear.crossValidation(problem, parameter, nr_fold, target);
+
+
+
+        stop = System.currentTimeMillis();
+        System.out.println("time: " + (stop - start) + "ms");
+
+
+        int totalCorrect = 0;
+        for (int i = 0; i < problem.l; i++)
+            if (target[i] == problem.y[i])
+                ++totalCorrect;
+        System.out.printf("correct: %d%n", totalCorrect);
+        System.out.printf("Cross Validation Accuracy = %g%%%n", 100.0*totalCorrect/problem.l);
+    }
+
     static Model[][] labeledMinMaxModuleTrain() throws IOException, InvalidInputDataException {
+        parameter = new Parameter();
+        parameter.setSolverType(SolverType.L2R_L2LOSS_SVC_DUAL);
+        parameter.setC(1);
+        parameter.setMaxIters(1000);
+        parameter.setEps(0.00001);
         Linear.info("Labeled Min_Max_Module Train Begin...\n");
         long start = System.currentTimeMillis();
         ArrayList<MyUtil.Record>[] arrayLists = constructArrayList();
@@ -345,7 +390,7 @@ public class MyTrain {
             res[i] = new Model[constNegSetNum];
             threads[i] = new TrainSubThread[constNegSetNum];
             for (int j = 0; j < constNegSetNum; j++) {
-                Linear.info("Train SubSet i: %d size: %d \t j: %d size: %d\n", i, posInfoLength[i], j, posInfoLength[j]);
+                Linear.info("Train SubSet i: %d size: %d \t j: %d size: %d\n", i, posInfoLength[i], j, negInfoLength[j]);
                 threads[i][j] = new TrainSubThread(res, i, j, pos, neg, posInfoOffset[i], negInfoOffset[j], posInfoLength[i], negInfoLength[j]);
                 threads[i][j].start();
             }

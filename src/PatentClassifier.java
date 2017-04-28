@@ -7,7 +7,7 @@ public class PatentClassifier {
     private static final String trainFile = "../data/train.txt";
     private static final String testFile = "../data/test.txt";
     private static final String basicResult = "../file/basic_result";
-    private static final String randomMinMaxModuleResult = "../file/ramdom_min_max_module_result";
+    private static final String randomMinMaxModuleResult = "../file/random_min_max_module_result";
     private static final String labeledMinMaxModuleResult = "../file/labeled_min_max_module_result";
 
     private static void Basic() throws IOException, InvalidInputDataException {
@@ -16,7 +16,9 @@ public class PatentClassifier {
             return;
         MyPredict.basicPredict(model, basicResult);
     }
-
+    private static void BasicCrossValidate() throws IOException, InvalidInputDataException {
+        MyTrain.basicCrossValidate();
+    }
     private static void RandomMinMaxModule() throws IOException, InvalidInputDataException {
         Model[][] models = MyTrain.randomMinMaxModuleTrain();
         if (models[0][0] == null)
@@ -37,8 +39,9 @@ public class PatentClassifier {
         double bias = MyTrain.getBias();
         System.out.printf("Dimensions: %d \t Bias: %g\n", dimensions, bias);
         new MyPredict(testFile, dimensions, bias);
-        Basic();
-        RandomMinMaxModule();
-        LabeledMinMaxModule();
+        //Basic();
+        BasicCrossValidate();
+        //RandomMinMaxModule();
+        //LabeledMinMaxModule();
     }
 }
