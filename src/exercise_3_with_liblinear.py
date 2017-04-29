@@ -9,11 +9,13 @@ def divide_problem(sizeP,sizeN):
     x_n=[]
     for i in range(len(data.x_train)):
         if data.y_train[i]==1:
-            x_p.append(data.x_train[i])
+            x_p.append((data.label_train[i],data.x_train[i]))
         else:
-            x_n.append(data.x_train[i])
-    random.shuffle(x_p)
-    random.shuffle(x_n)
+            x_n.append((data.label_train[i],data.x_train[i]))
+    x_p.sort(key=lambda x:x[0])
+    x_n.sort(key=lambda x:x[0])
+    x_p=[i[1]for i in x_p]
+    x_n = [i[1] for i in x_n]
     if sizeP>len(x_p) or sizeN>len(x_n):
         print("Warning: sizeP or sizeN too large!")
         sizeP=min(len(x_p),sizeP)
@@ -35,7 +37,7 @@ for i in range(len(problems)):
     for j in range(len(problems[i])):
         t.append(liblinearutil.train(problems[i][j], parameter))
     models.append(t)
-print("Exercise 1 with LIBLINEAR training finished in %f."%(time.clock()-time_start))
+print("Exercise 3 with LIBLINEAR training finished in %f."%(time.clock()-time_start))
 time_start = time.clock()
 p_val=[-1e100]*len(data.x_test)
 for i in range(len(problems)):
@@ -46,7 +48,7 @@ for i in range(len(problems)):
             t[k]=min(t[k],p_val_ij[k][0])
     for k in range(len(t)):
         p_val[k]=max(p_val[k],t[k])
-print("Exercise 1 with LIBLINEAR predicting finished in %f."%(time.clock()-time_start))
+print("Exercise 3 with LIBLINEAR predicting finished in %f."%(time.clock()-time_start))
 TPR=[]
 FPR=[]
 for s in [-8,-4,-2,-1,-0.5,0,0.5,1,2,4,8]:
@@ -80,6 +82,6 @@ pyplot.xlim([0, 1])
 pyplot.ylim([0, 1])
 pyplot.xlabel("FPR")
 pyplot.ylabel("TPR")
-pyplot.title("ROC of Exercise 2 with LIBLINEAR")
-pyplot.savefig("roc_exercise_2_with_liblinear.pdf")
+pyplot.title("ROC of Exercise 3 with LIBLINEAR")
+pyplot.savefig("roc_exercise_3_with_liblinear.pdf")
 #pyplot.show()
